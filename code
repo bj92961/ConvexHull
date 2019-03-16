@@ -31,7 +31,7 @@ class HeapSort:
             self.dataset[largest], self.dataset[idx] = self.dataset[idx], self.dataset[largest]
             self.heapify(largest, max)
    
-   class ConvexHull:
+class ConvexHull:
     def __init__(self, data):
         self.data = HeapSort(data,'x')
         self.upper_points = []
