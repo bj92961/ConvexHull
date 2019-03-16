@@ -1,0 +1,104 @@
+class HeapSort:
+    def __init__(self, dataset, sorting_axis):
+        self.dataset = dataset
+        self.sorting_axis = sorting_axis
+        self.heap_sort()
+
+    # Recursively enforce that A[idx,max) is valid heap
+    def heapify(self, idx, max):
+        main_axis = 0  #axis-x
+        minor_axis = 1 #axis-y
+        if self.sorting_axis == 'y':
+            main_axis = 1  #axis-y
+            minor_axis = 0 #axis-x 
+        largest = idx
+        left = 2*idx + 1
+        right = 2*idx + 2
+        if(left < max):
+            if(self.dataset[left][main_axis] > self.dataset[largest][main_axis]):
+                largest = left
+            elif (self.dataset[left][main_axis] == self.dataset[largest][main_axis]): #they are equal
+                if (self.dataset[left][minor_axis] > self.dataset[largest][minor_axis]): #check minor_axis
+                    largest = left
+        if(right < max): 
+            if (self.dataset[right][main_axis] > self.dataset[largest][main_axis]):
+                largest = right
+            elif (self.dataset[right][main_axis] == self.dataset[largest][main_axis]):
+                if (self.dataset[right][minor_axis] > self.dataset[largest][minor_axis]):
+                    largest = right
+        if(largest != idx):
+            #swap A[largest] with A[idx]
+            self.dataset[largest], self.dataset[idx] = self.dataset[idx], self.dataset[largest]
+            self.heapify(largest, max)
+   
+   class ConvexHull:
+    def __init__(self, data):
+        self.data = HeapSort(data,'x')
+        self.upper_points = []
+        self.lower_points = []
+            
+    def calculate_cross_product(self, p1, p2, p3):
+        return (p2[0]-p1[0])*(p3[1]-p1[1]) - (p2[1]-p1[1])*(p3[0]-p1[0])
+    
+    def last_three_points_left_turn(self, p1, p2, p3):
+        if self.calculate_cross_product(p1, p2, p3) > 0:
+            return True
+        else:
+            return False
+    #compute the convex hull by applying Andrew's algorithm
+    def compute_upper_hull_andrew(self):
+        #let's start with the first two points in the sorted dataset
+        self.upper_points = [self.data.dataset[0], self.data.dataset[1]]
+        for p3 in self.data.dataset[2:]:
+            self.upper_points.append(p3)
+            p1 = self.upper_points[-3]
+            p2 = self.upper_points[-2]
+            while self.last_three_points_left_turn(p1,p2,p3): #remove p2 from upper_points
+                del self.upper_points[-2]
+                #After deleting p2, if there are only 2 points in upper_points, then no more checking
+                #is needed. 
+                if len(self.upper_points) <= 2:
+                    break
+                #we need to make sure p1,p2,p3 in upper_points are making the right turn
+                p1 = self.upper_points[-3]
+                p2 = self.upper_points[-2]
+    
+    #compute the convex hull by applying Andrew's algorithm
+    def compute_lower_hull_andrew(self):
+        #this time we will traverse from right to left 
+        #let's start with the first two points in the sorted dataset
+        self.lower_points = [self.data.dataset[-1], self.data.dataset[-2]]
+        for p3 in self.data.dataset[::-1][2:]:
+            self.lower_points.append(p3)
+            p1 = self.lower_points[-3]
+            p2 = self.lower_points[-2]
+            while self.last_three_points_left_turn(p1,p2,p3): #remove p2 from lower_points
+                del self.lower_points[-2]
+                #After deleting p2, if there are only 2 points in lower_points, then no more checking
+                #is needed. 
+                if len(self.lower_points) <= 2:
+                    break
+                #we need to make sure p1,p2,p3 are making the right turn
+                p1 = self.lower_points[-3]
+                p2 = self.lower_points[-2]
+                
+    def compute_convex_hull_andrew(self):
+        if len(self.data.dataset) < 3:
+            return self.data.dataset
+        #Now, we should apply the Akl-Toussaint heuristic to eliminate impossible points.
+        #Akl-Toussaint heuristic: four extreme points froms a quadriangle. all points inside 
+        #this quadrangle can be eliminated.
+        self.Akl_Toussaint()
+        
+        #The basic idea is that any 3 consecutive points in convex_hull_points set should
+        #make a right turn triangle. We need to sort points first based on x-axis. Then we 
+        #traverse the sorted points list. 
+        self.compute_upper_hull_andrew()
+        self.compute_lower_hull_andrew()
+  
+        #merge upper and lower points
+        #delete the first and last point in lower_points. They are two endpoints that are already in
+        #upper_points
+        del self.lower_points[0]
+        del self.lower_points[-1]
+        return (self.upper_points+self.lower_points)
